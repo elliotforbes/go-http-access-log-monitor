@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -30,8 +29,9 @@ type Monitor struct {
 // and reporting.
 func (m *Monitor) Start() {
 	logger.Log.Println("Starting HTTP Access Log Monitor")
+
+	// Start the Goroutine that handles dislpaying to the console
 	recorder := statistics.NewRecorder()
-	fmt.Printf("%+v", m)
 	go m.Reporter.Output(*recorder)
 	m.watchAccessLog(m.Config.FilePath, recorder)
 }
@@ -51,6 +51,10 @@ func (m *Monitor) watchAccessLog(filepath string, stats *statistics.StatsRecorde
 	logger.Log.Println("Starting Cron Job to Flush Old Log Records")
 	c := cron.New()
 	c.AddFunc("@every 1s", stats.FlushOldRecords)
+	logger.Log.Println("Starting Cron Job to Watch for Alerts")
+	c.AddFunc("@every 1s", func() {
+		stats.CheckAlerts(m.Config.AlertThreshold)
+	})
 	c.Start()
 
 	logger.Log.Println("Listening for new lines to be added to the file")
@@ -82,6 +86,9 @@ func ParseRequest(input string) (statistics.Request, error) {
 	requestStr = strings.TrimSuffix(requestStr, "\"")
 	sections := strings.Split(requestStr, " ")
 
+	section := strings.Split(sections[1], "/")
+	requestSection := "/" + section[1]
+
 	// find timestamp and trim the square brackets
 	timeRegex, err := regexp.Compile(`\[([^\[\]]*)\]`)
 	if err != nil {
@@ -99,7 +106,7 @@ func ParseRequest(input string) (statistics.Request, error) {
 
 	request := statistics.Request{
 		Verb:      sections[0],
-		Path:      sections[1],
+		Section:   requestSection,
 		Protocol:  sections[2],
 		Timestamp: logTime,
 	}

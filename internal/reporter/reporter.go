@@ -22,6 +22,7 @@ type Reporter interface {
 // collected by our monitor to the console/terminal
 type ConsoleReporter struct{}
 
+// NewReporter returns a pointer to a new ConsoleReporter struct
 func NewReporter() *ConsoleReporter {
 	return &ConsoleReporter{}
 }
@@ -32,13 +33,13 @@ func NewReporter() *ConsoleReporter {
 func (c ConsoleReporter) Output(stats statistics.StatsRecorder) {
 	for {
 		fmt.Println("\033[H\033[2J")
-		fmt.Println("Displaying Traffic for last 10 seconds...")
+		fmt.Println("Website Traffic")
 		fmt.Println("---------------------------")
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', tabwriter.Debug)
 		fmt.Fprintln(w, "  Section  \t 10s Average \t Total Hits - Last 2 Minutes  \t High Traffic Alert")
 
-		for _, section := range stats.ToSortedSlice() {
+		for _, section := range stats.ToSortedList() {
 			alertColor := color.New(color.FgGreen).SprintFunc()
 			if stats.Stats[section].HighTrafficAlert {
 				alertColor = color.New(color.Bold, color.FgRed).SprintFunc()
@@ -48,7 +49,8 @@ func (c ConsoleReporter) Output(stats statistics.StatsRecorder) {
 		}
 		fmt.Println("All Triggered Alerts")
 		fmt.Println("---------------------------")
-		for _, alert := range stats.Alerts {
+		fmt.Println(stats.Alerts)
+		for alert, _ := range stats.Alerts {
 			fmt.Println(alert)
 		}
 		w.Flush()

@@ -15,7 +15,6 @@ HTTP Log Monitor
 * Make sure all messages showing when alerting thresholds are crossed remain visible on the page for historical reasons
 * Write a test for the alerting logic
 
-
 * Make sure a user can keep the app running and monitor the log file continuously - DONE
 * Consume an actively written-to HTTP access log
     * default to /tmp/access.log - should be overrideable - DONE

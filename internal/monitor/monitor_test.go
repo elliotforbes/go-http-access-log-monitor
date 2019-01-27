@@ -69,9 +69,9 @@ func TestParseRequest(t *testing.T) {
 	assert.Equal(t, request1.Path, "/topics")
 
 	request2 := ParseRequest(testLogs[1])
-	assert.Equal(t, request2.Path, "/categories/politics")
+	assert.Equal(t, request2.Path, "/categories")
 
 	request3 := ParseRequest(testLogs[1])
-	assert.Equal(t, request2.Path, "/categories/politics")
+	assert.Equal(t, request2.Path, "/categories")
 
 }

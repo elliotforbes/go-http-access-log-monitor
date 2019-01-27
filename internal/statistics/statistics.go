@@ -4,7 +4,7 @@ package statistics
 
 import (
 	"sort"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/elliotforbes/go-http-monitor/internal/logger"
@@ -14,7 +14,7 @@ import (
 // information from a given HTTP Access Log Record
 type Request struct {
 	Verb      string
-	Path      string
+	Section   string
 	Protocol  string
 	Timestamp time.Time
 }
@@ -41,8 +41,16 @@ func NewRecorder() *StatsRecorder {
 
 // CheckAlerts attempts to see if any alerts need to be triggered
 // when a new request is recorded.
-func (s *StatsRecorder) CheckAlerts(request Request) {
-	// if s.Stats[request.Path].Hits / 120
+func (s *StatsRecorder) CheckAlerts(threshold int) {
+	for section, _ := range s.Stats {
+		if len(s.Stats[section].Hits) > threshold {
+			alertMsg := "high traffic generated an alert - hits = " + strconv.Itoa(len(s.Stats[section].Hits)) + ", triggered at " + time.Now().String()
+			s.Alerts = append(s.Alerts, alertMsg)
+			s.Stats[section].HighTrafficAlert = true
+		} else {
+			s.Stats[section].HighTrafficAlert = false
+		}
+	}
 }
 
 func (s *StatsRecorder) FlushOldRecords() {
@@ -59,7 +67,9 @@ func (s *StatsRecorder) FlushOldRecords() {
 	}
 }
 
-func (s *StatsRecorder) ToSortedSlice() []string {
+// ToSortedList returns a sorted list of paths which can then
+// be used to structure output.
+func (s *StatsRecorder) ToSortedList() []string {
 	paths := make([]string, 0, len(s.Stats))
 	for key, _ := range s.Stats {
 		paths = append(paths, key)
@@ -68,19 +78,17 @@ func (s *StatsRecorder) ToSortedSlice() []string {
 	return paths
 }
 
+// RecordRequest takes in a new Request and a threshold limit and
+// records this request in our StatsRecorder.
 func (s *StatsRecorder) RecordRequest(request Request, threshold int) {
-	// parse section from path
-	sections := strings.Split(request.Path, "/")
-	section := "/" + sections[1]
 
 	// If section already exists with map then
 	// increment total hits for the last 10 seconds
-	if _, ok := s.Stats[section]; ok {
-		s.Stats[section].Hits = append(s.Stats[section].Hits, request)
-		// TODO: calculate average
+	if _, ok := s.Stats[request.Section]; ok {
+		s.Stats[request.Section].Hits = append(s.Stats[request.Section].Hits, request)
 	} else {
-		s.Stats[section] = &Stats{}
-		s.Stats[section].Hits = append(s.Stats[section].Hits, request)
+		s.Stats[request.Section] = &Stats{}
+		s.Stats[request.Section].Hits = append(s.Stats[request.Section].Hits, request)
 	}
 
 }
