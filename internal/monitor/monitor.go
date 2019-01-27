@@ -32,14 +32,14 @@ func (m *Monitor) Start() {
 
 	// Start the Goroutine that handles dislpaying to the console
 	recorder := statistics.NewRecorder()
-	go m.Reporter.Output(*recorder)
+	go m.Reporter.Output(recorder)
 	m.watchAccessLog(m.Config.FilePath, recorder)
 }
 
 // watchAccessLog takes in a string path to a file and
 // begins tailing that file for new log records. When new log records
 // are recorded, it coordinates parsing and the gathering of statistics
-func (m *Monitor) watchAccessLog(filepath string, stats *statistics.StatsRecorder) {
+func (m *Monitor) watchAccessLog(filepath string, stats *statistics.Recorder) {
 
 	// this tails the log file in question, or throws an error
 	t, err := tail.TailFile(filepath, tail.Config{Follow: true})

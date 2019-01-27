@@ -58,13 +58,21 @@ func TestCheckAlerts(t *testing.T) {
 		Protocol:  "HTTP",
 		Timestamp: now,
 	}
-	testRecorder.RecordRequest(dummyRequest, 10)
-	fmt.Printf("%+v\n", testRecorder.Stats["/api"])
-	assert.Equal(t, len(testRecorder.Stats["/api"].Hits), 1)
+	for i := 0; i < 20; i++ {
+		testRecorder.RecordRequest(dummyRequest, 10)
+	}
+	assert.Equal(t, len(testRecorder.Stats["/api"].Hits), 20)
 
-	// simulate 3 minutes going by
+	testRecorder.CheckAlerts(10)
+	assert.Equal(t, len(testRecorder.Alerts), 1)
+
 	threeMinsAgo := time.Now().Add(time.Duration(-180) * time.Second)
-	testRecorder.Stats["/api"].Hits[0].Timestamp = threeMinsAgo
+	for i := 0; i < len(testRecorder.Stats["/api"].Hits); i++ {
+		testRecorder.Stats["/api"].Hits[i].Timestamp = threeMinsAgo
+	}
 	testRecorder.FlushOldRecords()
-	assert.Equal(t, len(testRecorder.Stats["/api"].Hits), 0)
+	testRecorder.CheckAlerts(10)
+
+	assert.Equal(t, 2, len(testRecorder.Alerts))
+
 }

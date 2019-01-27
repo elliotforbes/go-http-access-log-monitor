@@ -20,7 +20,7 @@ type Request struct {
 }
 
 // Stats Recorder
-type StatsRecorder struct {
+type Recorder struct {
 	Stats  map[string]*Stats
 	Alerts []string
 }
@@ -32,28 +32,36 @@ type Stats struct {
 	HighTrafficAlert bool
 }
 
-// NewRecorder returns a pointer to a new StatsRecorder struct
-func NewRecorder() *StatsRecorder {
-	return &StatsRecorder{
+// NewRecorder returns a pointer to a new Recorder struct
+func NewRecorder() *Recorder {
+	return &Recorder{
 		Stats: make(map[string]*Stats),
 	}
 }
 
 // CheckAlerts attempts to see if any alerts need to be triggered
 // when a new request is recorded.
-func (s *StatsRecorder) CheckAlerts(threshold int) {
+func (s *Recorder) CheckAlerts(threshold int) {
 	for section, _ := range s.Stats {
 		if len(s.Stats[section].Hits) > threshold {
-			alertMsg := "high traffic generated an alert - hits = " + strconv.Itoa(len(s.Stats[section].Hits)) + ", triggered at " + time.Now().String()
-			s.Alerts = append(s.Alerts, alertMsg)
+
+			if s.Stats[section].HighTrafficAlert != true {
+				alertMsg := "high traffic generated an alert - hits at time of alert = " + strconv.Itoa(len(s.Stats[section].Hits)) + ", triggered at " + time.Now().String()
+				s.Alerts = append(s.Alerts, alertMsg)
+			}
+			// display high traffic alert on that particular section
 			s.Stats[section].HighTrafficAlert = true
 		} else {
-			s.Stats[section].HighTrafficAlert = false
+			if s.Stats[section].HighTrafficAlert {
+				alertMsg := "Alert Recovered: " + time.Now().String()
+				s.Alerts = append(s.Alerts, alertMsg)
+				s.Stats[section].HighTrafficAlert = false
+			}
 		}
 	}
 }
 
-func (s *StatsRecorder) FlushOldRecords() {
+func (s *Recorder) FlushOldRecords() {
 	for section, _ := range s.Stats {
 		for i := len(s.Stats[section].Hits) - 1; i >= 0; i-- {
 			if s.Stats[section].Hits[i].Timestamp.Before(time.Now().Add(time.Duration(-2) * time.Minute)) {
@@ -69,7 +77,7 @@ func (s *StatsRecorder) FlushOldRecords() {
 
 // ToSortedList returns a sorted list of paths which can then
 // be used to structure output.
-func (s *StatsRecorder) ToSortedList() []string {
+func (s *Recorder) ToSortedList() []string {
 	paths := make([]string, 0, len(s.Stats))
 	for key, _ := range s.Stats {
 		paths = append(paths, key)
@@ -79,8 +87,8 @@ func (s *StatsRecorder) ToSortedList() []string {
 }
 
 // RecordRequest takes in a new Request and a threshold limit and
-// records this request in our StatsRecorder.
-func (s *StatsRecorder) RecordRequest(request Request, threshold int) {
+// records this request in our Recorder.
+func (s *Recorder) RecordRequest(request Request, threshold int) {
 
 	// If section already exists with map then
 	// increment total hits for the last 10 seconds
