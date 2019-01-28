@@ -42,11 +42,14 @@ func NewRecorder() *Recorder {
 // CheckAlerts attempts to see if any alerts need to be triggered
 // when a new request is recorded.
 func (s *Recorder) CheckAlerts(threshold int) {
+	// alertLevel = inputted transactions per second * 2 minutes (120s)
+	// if alert level surpasses this, record new alert
+	alertLevel := threshold * 120
 	for section, _ := range s.Stats {
-		if len(s.Stats[section].Hits) > threshold {
+		if len(s.Stats[section].Hits) > alertLevel {
 
 			if s.Stats[section].HighTrafficAlert != true {
-				alertMsg := "high traffic generated an alert - hits at time of alert = " + strconv.Itoa(len(s.Stats[section].Hits)) + ", triggered at " + time.Now().String()
+				alertMsg := "High Traffic generated an alert - hits at time of alert = " + strconv.Itoa(len(s.Stats[section].Hits)) + ", triggered at " + time.Now().String()
 				s.Alerts = append(s.Alerts, alertMsg)
 			}
 			// display high traffic alert on that particular section
@@ -66,9 +69,11 @@ func (s *Recorder) FlushOldRecords() {
 		for i := len(s.Stats[section].Hits) - 1; i >= 0; i-- {
 			if s.Stats[section].Hits[i].Timestamp.Before(time.Now().Add(time.Duration(-2) * time.Minute)) {
 				logger.Log.Printf("Flushing Record: %+v\n", s.Stats[section].Hits[i])
+				// I am shifting all elements left one space as opposed to just deleting the element so I
+				// can attempt to preserve order within my array
 				s.Stats[section].Hits = append(s.Stats[section].Hits[:i], s.Stats[section].Hits[i+1:]...)
 			} else {
-				// TODO: If this list is guaranteed to be ordered, we can break when the
+				// break here if the last element checked is less than 2 minutes old, we
 				break
 			}
 		}

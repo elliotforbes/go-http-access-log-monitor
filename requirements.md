@@ -8,12 +8,12 @@ HTTP Log Monitor
         i.e. /pages/create -> section == /pages - DONE
 
 * Whenever total traffic for the past 2 minutes exceeds a certain number on average, add a default message saying that:
-     "high traffic generated an alert - hits = {value}, triggered at {time}"
+     "high traffic generated an alert - hits = {value}, triggered at {time}" - DONE
 * Whenever total traffic drops again below that value on average for the past 2 minutes, add another message saying that:
-    "alert recovered"
+    "alert recovered" - DONE
 
-* Make sure all messages showing when alerting thresholds are crossed remain visible on the page for historical reasons
-* Write a test for the alerting logic
+* Make sure all messages showing when alerting thresholds are crossed remain visible on the page for historical reasons - DONE
+* Write a test for the alerting logic - DONE
 
 * Make sure a user can keep the app running and monitor the log file continuously - DONE
 * Consume an actively written-to HTTP access log

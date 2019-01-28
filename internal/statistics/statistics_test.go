@@ -58,10 +58,10 @@ func TestCheckAlerts(t *testing.T) {
 		Protocol:  "HTTP",
 		Timestamp: now,
 	}
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 1201; i++ {
 		testRecorder.RecordRequest(dummyRequest, 10)
 	}
-	assert.Equal(t, len(testRecorder.Stats["/api"].Hits), 20)
+	assert.Equal(t, len(testRecorder.Stats["/api"].Hits), 1201)
 
 	testRecorder.CheckAlerts(10)
 	assert.Equal(t, len(testRecorder.Alerts), 1)
